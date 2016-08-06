@@ -1,0 +1,388 @@
+<div class="panel-body">
+    <div style=" margin: 0 15px 20px 15px;">
+        <div class="row" style="background-color: #f8f8f8">
+            <div class="col-md-12 ">
+                <div class="row ">
+                    <div class="col-md-4 bg-primary text-center" style="height: 35px;line-height: 35px"><span>省</span>
+                    </div>
+                    <div class="col-md-4 bg-success text-center" style="height: 35px;line-height: 35px"><span>市</span>
+                    </div>
+                    <div class="col-md-4 bg-info text-center" style="height: 35px;line-height: 35px"><span>区/县</span>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="col-md-4 area-list" style="padding: 0">
+
+                <ul class="nav nav-pills nav-stacked" id="area-province">
+                    {foreach $province as $v}
+                    <li data-code="{$v.code}" data-cate="1"><a href="javascript:void(0);"><div
+                            class="checkbox-inline"><input type="checkbox">{$v.name}</div></a></li>
+                    {/foreach}
+                </ul>
+            </div>
+
+            <div class="col-md-4 area-list" style="padding: 0;border-left: 1px solid #ddd;border-right: 1px solid #ddd">
+
+                <ul class="nav nav-pills nav-stacked" id="area-city">
+
+                </ul>
+            </div>
+            <div class="col-md-4 area-list" style="padding: 0">
+
+                <ul class="nav nav-pills nav-stacked" id="area-district">
+
+                </ul>
+            </div>
+            <div class="col-md-12 ">
+                <div class="row ">
+                    <div class="col-md-4 area-bottom"><span><label class="checkbox-inline"><input type="checkbox"
+                                                                                                  id="all-province">全选</label></span>
+                    </div>
+                    <div class="col-md-4 area-bottom"><span><label class="checkbox-inline"><input type="checkbox"
+                                                                                                  id="all-city">全选</label></span>
+                    </div>
+                    <div class="col-md-4 area-bottom"><span><label class="checkbox-inline"><input type="checkbox"
+                                                                                                  id="all-district">全选</label></span>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+
+    <div class="city-selected">
+    </div>
+
+
+</div>
+<a href="javascript:void (0);" class="btn btn-success btn-block" id="area-submit">保存</a>
+<script>
+    var area = [], $area_list = $('.area-list'),$select_div=$('.city-selected');
+    //美化滚动条
+    $area_list.niceScroll({
+        cursorborder: "#ffffff",
+        cursorcolor: "#ddd",
+        cursorwidth: "6px",
+        zindex: 1,
+        boxzoom: false,
+    });
+    $select_div.niceScroll({
+        cursorborder: "#ffffff",
+        cursorcolor: "#ddd",
+        cursorwidth: "6px",
+        zindex: 1,
+        boxzoom: false,
+    });
+
+    //selected-div 取消选择i
+    $select_div.on('click','.fa-times-circle',function(){
+        var parent=$(this).parent();
+        var code=parent.attr('data-code');
+        var cate=parent.attr('data-cate');
+
+        removeSpan(code);
+        var li=$('.area-list li[data-code="'+code+'"');
+        li.find('input').prop('checked', false);
+        cancelProvince(code,cate,li);
+
+//        $.post('__INDEX__manager/getCodeSun',{cate:cate,code:code},function(msg){
+//
+//            var sum=0;
+//            for(var key in msg['data']){
+//                if($.inArray(msg['data'][key].code,area)!=-1){
+//                    sum=sum+1;
+//
+//                }
+//            }
+//            console.log(sum);
+//            if(sum==0){
+//                removeSpan(msg.p_code);
+//            }
+//        });
+
+
+    });
+
+
+
+
+
+    //全选
+    //省
+    $('#all-province').on('change',function(){
+        var status = $(this).prop('checked');
+
+            $('#area-province input[type="checkbox"]').each(function () {
+                var parent=$(this).parent().parent().parent();
+                var code = parent.attr('data-code');
+                var cate = parent.attr('data-cate');
+                var name = $(this).parent().parent().text();
+                if(status){
+                    selectProvince(code,cate,parent,name);
+                    $(this).prop('checked', true);
+                }else {
+                    cancelProvince(code,cate,parent);
+                    $(this).prop('checked', false);
+                }
+            });
+    });
+    //市
+    $('#all-city').on('change',function(){
+        var status = $(this).prop('checked');
+
+        $('#area-city input[type="checkbox"]').each(function () {
+            var parent=$(this).parent().parent().parent();
+            var code = parent.attr('data-code');
+            var cate = parent.attr('data-cate');
+            var name = $(this).parent().parent().text();
+            if(status){
+                selectProvince(code,cate,parent,name);
+                $(this).prop('checked', true);
+            }else {
+                cancelProvince(code,cate,parent);
+                $(this).prop('checked', false);
+            }
+        });
+    });
+    //区
+    $('#all-district').on('change',function(){
+        var status = $(this).prop('checked');
+        $('#area-district input[type="checkbox"]').each(function () {
+            var parent=$(this).parent().parent().parent();
+            var code = parent.attr('data-code');
+            var cate = parent.attr('data-cate');
+            var name = $(this).parent().parent().text();
+            if(status){
+                selectProvince(code,cate,parent,name);
+                $(this).prop('checked', true);
+            }else {
+                cancelProvince(code,cate,parent);
+                $(this).prop('checked', false);
+            }
+        });
+    });
+
+    //保存权限
+    $('#area-submit').on('click', function () {
+        var code1 = [], code2 = [], code3 = [], uid;
+        uid = 1;//TODO test
+        $('.city-selected>span[data-cate="1"]').each(function () {
+            code1.push($(this).attr('data-code'));
+        });
+        $('.city-selected>span[data-cate="2"]').each(function () {
+            code2.push($(this).attr('data-code'));
+        });
+        $('.city-selected>span[data-cate="3"]').each(function () {
+            code3.push($(this).attr('data-code'));
+        });
+
+        $.post('__INDEX__manager/saveAuth', {
+            province_code: code1,
+            city_code: code2,
+            district_code: code3,
+            uid: uid
+        }, function () {
+
+        });
+    });
+
+
+    var flag_check=false;
+    //委派省市区 选中/取消 事件
+    $area_list.on('change', 'input[type="checkbox"]', function () {
+
+        console.log('change-area');
+        flag_check=true;
+        var status = $(this).prop('checked');
+        var parent = $(this).parent().parent().parent();
+        var code = parent.attr('data-code');
+        var cate = parent.attr('data-cate');
+
+        var name = $(this).parent().parent().text();
+
+
+        //下级操作
+        if (status) {
+            selectProvince(code,cate,parent,name);
+        } else {
+            cancelProvince(code,cate,parent);
+        }
+
+
+        //上级操作
+        if(cate!=1){
+            linkage(cate,parent);
+
+        }
+
+    });
+
+    //移除selected-div中span
+
+    function removeSpan(code){
+        $('.city-selected>span[data-code="' + code + '"]').remove();
+        area.pop(code);
+    }
+
+
+    //向selected-div添加span
+    function addSpan(cate,name,code){
+
+        if($.inArray(code, area)==-1){
+        switch (cate) {
+            case '1':
+                var label = $('<span class="label label-primary" data-code="' + code + '" data-cate="' + cate + '" >' + name + '&nbsp;<i class="fa fa-times-circle"></i></span>');
+                break;
+            case '2':
+                var label = $('<span class="label label-success" data-code="' + code + '" data-cate="' + cate + '">' + name + '&nbsp;<i class="fa fa-times-circle"></i></span>');
+                break;
+            case '3':
+                var label = $('<span class="label label-info" data-code="' + code + '" data-cate="' + cate + '">' + name + '&nbsp;<i class="fa fa-times-circle"></i></span>');
+                break;
+        }
+        $select_div.append(label);
+        area.push(code);
+        }
+    }
+
+
+    //选后子选项后的上级联动操作
+
+    function linkage(cate,parent){
+        var p_code=parent.attr('data-parent');
+        var p=$('li[data-code="'+p_code+'"]');
+        var g_code= p.attr('data-parent');
+        if(isSelected(cate)){
+            p.find('input').prop('checked', true);
+            p.addClass('bg-success');
+            if(g_code){
+                addSpan('2', p.text(),p_code);
+                var g_li=$('li[data-code="'+g_code+'"]');
+                g_li.find('input').prop('checked', true);
+                g_li.addClass('bg-success');
+                addSpan('1', g_li.text(),g_code);
+            }else {
+                addSpan('1', p.text(),p_code);
+            }
+        }else {
+            p.find('input').prop('checked', false);
+            p.removeClass('bg-success');
+            removeSpan(p_code);
+            if(g_code){
+                var g_li=$('li[data-code="'+g_code+'"]');
+                g_li.find('input').prop('checked', false);
+                g_li.removeClass('bg-success');
+                removeSpan(g_code);
+            }else {
+            }
+        }
+
+    }
+
+    //检查当前区域是否有选中选项
+    function isSelected(cate){
+
+        switch (cate){
+            case '2':
+                    return $('#area-city .bg-success').length;
+                break;
+            case '3':
+                return $('#area-district .bg-success').length;
+                break;
+
+        }
+    }
+
+
+    //选中函数
+    function selectProvince(code, cate, parent, name) {
+        parent.addClass('bg-success');
+     addSpan(cate,name,code);
+        $.post('__INDEX__manager/getCode', {code: code, cate: cate}, function (msg) {
+            //遍历子地区
+            for (var key in msg) {
+                addSpan(msg[key].cate,msg[key].name,msg[key].code);
+            }
+        });
+
+    }
+
+    //取消函数
+    function cancelProvince(code,cate,parent){
+        parent.removeClass('bg-success');
+        removeSpan(code);
+        $.post('__INDEX__manager/getCode',{code:code,cate:cate},function(msg){
+
+            for(var key in msg){
+                removeSpan(msg[key].code);
+                var li=$('li[data-code="'+msg[key].code+'"]');
+                li.find('input').prop('checked',false);
+                li.removeClass('bg-success');
+            }
+        });
+    }
+
+
+
+    //委派点击省份事件
+    $('#area-province').on('click', 'li', function () {
+        var province_code = $(this).attr('data-code');
+
+
+        $.post('__INDEX__manager/getCity', {province_code: province_code}, function (msg) {
+            var $city_div = $('#area-city');
+            $city_div.empty();
+            for (var key in msg) {
+
+                if (flag_check) {
+                    var li = $('<li data-code="' + msg[key].code + '" data-cate="2" data-parent="' + msg[key].province_code + '" class="bg-success"><a href="javascript:void(0);"><div class="checkbox-inline"><input type="checkbox" checked>' + msg[key].name + '</div></a></li>');
+                } else {
+                    var code_isexist = $.inArray(msg[key].code, area);
+                    if (code_isexist == -1) {
+                        var li = $('<li data-code="' + msg[key].code + '" data-cate="2" data-parent="' + msg[key].province_code + '"><a href="javascript:void(0);"><div class="checkbox-inline"><input type="checkbox">' + msg[key].name + '</div></a></li>');
+                    } else {
+                        var li = $('<li data-code="' + msg[key].code + '" data-cate="2" data-parent="' + msg[key].province_code + '" class="bg-success"><a href="javascript:void(0);"><div class="checkbox-inline"><input type="checkbox" checked>' + msg[key].name + '</div></a></li>');
+                    }
+                }
+
+                $city_div.append(li);
+            }
+            flag_check=false;
+
+        });
+    });
+
+    //委派点击城市事件
+    $('#area-city').on('click', 'li', function () {
+        console.log('sort-click');
+        var city_code = $(this).attr('data-code');
+        var checked_status=$('#area-city li[data-code="'+city_code+'"]').find('input').prop('checked');
+        $.post('__INDEX__manager/getDistrict', {city_code: city_code}, function (msg) {
+            var $district_div = $('#area-district');
+            $district_div.empty();
+            for (var key in msg) {
+                if(flag_check){
+                    var li = $('<li data-code="' + msg[key].code + '"  data-parent="' + msg[key].city_code + '" data-cate="3" class="bg-success"><a href="javascript:void(0);"><div class="checkbox-inline"><input type="checkbox" checked>' + msg[key].name + '</div></a></li>');
+                }
+                else {
+                    var code_isexist = $.inArray(msg[key].code, area);
+                    if (code_isexist == -1) {
+                        var li = $('<li data-code="' + msg[key].code + '"  data-parent="' + msg[key].city_code + '" data-cate="3"><a href="javascript:void(0);"><div class="checkbox-inline"><input type="checkbox">' + msg[key].name + '</div></a></li>');
+                    } else {
+                        var li = $('<li data-code="' + msg[key].code + '"  data-parent="' + msg[key].city_code + '" data-cate="3" class="bg-success"><a href="javascript:void(0);"><div class="checkbox-inline"><input type="checkbox" checked>' + msg[key].name + '</div></a></li>');
+                    }
+                }
+
+                $district_div.append(li);
+            }
+            flag_check=false;
+
+        });
+    });
+
+</script>

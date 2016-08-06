@@ -1,0 +1,352 @@
+<div class="panel-body">
+    <div class="row" style="margin-bottom: 20px">
+        <div class="col-md-8">
+
+            <div class="row">
+                <div class="col-md-2">
+                    <select name="province_code" data-id="1" class="form-control input-sm">
+                        <option value="1">省</option>
+                        {foreach $province as $v}
+                        <option value="{$v.code}" {$Request.param.pr==$v.code?'selected':''}>{$v.name}</option>
+                        {/foreach}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="city_code" data-id="2" class="form-control input-sm">
+                        <option value="1">市</option>
+                        {foreach $city as $v}
+                        <option value="{$v.code}" {$Request.param.c==$v.code?'selected':''}>{$v.name}</option>
+                        {/foreach}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="district_code" data-id="3" class="form-control input-sm">
+                        <option value="1">区/县</option>
+                        {foreach $district as $v}
+                        <option value="{$v.code}" {$Request.param.d==$v.code?'selected':''}>{$v.name}</option>
+                        {/foreach}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <div class="input-group input-group-sm">
+
+                        <input type="text" class="form-control" id="search-context" placeholder="代理商用户名" value="{$Request.param.s}">
+                 <span class="input-group-btn">
+                 <a href="javascript:void (0);" id="filter-submit" class="btn btn-success btn-sm">搜索</a>
+               </span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="btn-group btn-group-sm  pull-right" id="btn-able-status">
+                <a type="button" class="btn btn-default {$Request.param.b==3||!$Request.param.b?'active':''}" data-cate="3">全部</a>
+                <a type="button" class="btn btn-default {$Request.param.b==1?'active':''}" data-cate="1">开通</a>
+                <a type="button" class="btn btn-default {$Request.param.b==2?'active':''}" data-cate="2">禁用</a>
+            </div>
+        </div>
+
+
+
+
+    </div>
+    <table class="table">
+        <thead>
+        <tr>
+            <th>用户名</th>
+            <th>负责区域</th>
+            <th>负责人</th>
+            <th>联系电话</th>
+            <th >发布商品数&nbsp;<i class="fa {$Request.param.sort=='goods_count-2'?'fa-arrow-circle-down sort-down':'fa-arrow-circle-up sort-up'}" data-cate="goods_count" data-sort="{$Request.param.sort=='goods_count-2'?1:2}" data-toggle="tooltip" data-placement="top" title="点击按{$Request.param.sort=='goods_count-2'?'正序':'倒序'}排列"></i></th>
+            <th>成交订单数&nbsp;<i class="fa  {$Request.param.sort=='order_count-2'?'fa-arrow-circle-down sort-down':'fa-arrow-circle-up sort-up'}" data-cate="order_count"  data-sort="{$Request.param.sort=='order_count-2'?1:2}" data-toggle="tooltip" data-placement="top" title="点击按{$Request.param.sort=='order_count-2'?'正序':'倒序'}排列"></i></th>
+            <th>流水账</th>
+            <th>注册时间&nbsp;<i class="fa {$Request.param.sort=='create_time-1'?'fa-arrow-circle-up sort-up':'fa-arrow-circle-down sort-down'}" data-cate="create_time"  data-sort="{$Request.param.sort=='create_time-1'?2:1}" data-toggle="tooltip" data-placement="top" title="点击按{$Request.param.sort=='create_time-1'?'倒序':'正序'}排列"></i></th>
+            <th>开通时间&nbsp;<i class="fa {$Request.param.sort=='able_time-2'?'fa-arrow-circle-down sort-down':'fa-arrow-circle-up sort-up'}" data-cate="able_time"  data-sort="{$Request.param.sort=='able_time-2'?1:2}" data-toggle="tooltip" data-placement="top" title="点击按{$Request.param.sort=='able_time-2'?'正序':'倒序'}排列"></i></th>
+            <th>禁用时间</th>
+            <th>状态</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <tbody>
+
+        {foreach $list as $v}
+        <tr>
+            <td>{$v.username}</td>
+            <td><a href="javascript:void (0);" type="button" data-toggle="tooltip"
+                   data-placement="right" title="{foreach $v.area as $va}{$va.name},&nbsp;{/foreach}">
+                查看
+            </a></td>
+            <!--<td>{foreach $v.area as $va}{$va.name},&nbsp;{/foreach}</td>-->
+            <td>{$v.responsible}</td>
+            <td>{$v.phone}</td>
+            <td class="text-primary">{$v.goods_count}</td>
+            <td class="text-danger">{$v.order_count}</td>
+            <td class="text-success">{$v.running_account}</td>
+            <td>{$v.create_time}</td>
+            <td>{$v.able_time}</td>
+            <td>{$v.disable_time}</td>
+            <td class="text-danger">{$v.status_cn}</td>
+            <td>
+                {switch name="v.status"}
+                {case value="0"}
+                <a href="javascript:void (0);" class="btn btn-success btn-xs able-status" data-id="{$v.id}"
+                   data-type="able-status" data-status="1">激活</a>
+                {/case}
+                {case value="1"}
+                <a href="javascript:void (0);" class="btn btn-danger btn-xs able-status" data-id="{$v.id}"
+                   data-type="able-status" data-status="2">禁用</a>
+
+                {/case}
+                {case value="2"}
+                <a href="javascript:void (0);" class="btn btn-success btn-xs able-status" data-id="{$v.id}"
+                   data-type="able-status" data-status="1">开通</a>
+                {/case}
+                {/switch}
+                <a href="__INDEX__manager/editManager/id/{$v.id}" class="btn btn-info btn-xs">编辑</a>
+            </td>
+
+        </tr>
+
+
+        {/foreach}
+
+
+        </tbody>
+    </table>
+{$list->render()}
+</div>
+
+<script>
+    $(function () {
+
+        //升序降序事件
+        $('th>i').on('click',function(){
+           var cate=$(this).attr('data-cate');
+           var sort=$(this).attr('data-sort');
+            getUrl('sort',cate+'-'+sort);
+
+        });
+
+
+        //三级联动省市区
+        $('select').on('change', function () {
+            var $this = $(this);
+            var code = $this.val();
+            var cate = $this.attr('data-id');
+            var num = parseInt(cate) + 1;
+            var $next_select = $('select[data-id="' + num + '"]');
+
+
+            $next_select.empty();
+            $.post('__INDEX__manager/getCodeSun', {code: code, cate: cate}, function (msg) {
+                switch (cate) {
+                    case '1':
+                        $next_select.append('<option value="1">请选择市</option>');
+                        break;
+                    case '2':
+                        $next_select.append('<option value="1">请选择区/县</option>');
+                        break;
+                }
+
+                for (var key in msg) {
+                    var option = $('<option value="' + msg[key].code + '">' + msg[key].name + '</option>');
+                    $next_select.append(option);
+                }
+            });
+        });
+
+        //搜索按钮点击事件
+        $('#filter-submit').on('click',function(){
+
+            var p_code=$('select[name="province_code"]').val();
+            var c_code=$('select[name="city_code"]').val();
+            var d_code=$('select[name="district_code"]').val();
+            var search=$('#search-context').val();
+            var btn_status=$('#btn-able-status>.active').attr('data-cate');
+            console.log(btn_status);
+
+            var href='__SITE__managerList';
+
+            if (p_code != 1) {
+                if (c_code == 1||c_code==null) {
+                    href = href +'/pr/'+ p_code;
+                } else {
+                    if (d_code == 1||d_code==null) {
+                        href = href +'/pr/' + p_code + '/c/' + c_code;
+                    } else {
+                        href = href +'/pr/'+ p_code + '/c/' + c_code + '/d/' + d_code;
+                    }
+                }
+            }
+
+            if(search){
+                href=href+ '/s/'+search;
+            }
+            if(btn_status){
+                href=href+'/b/'+btn_status;
+            }
+
+            window.location.href=href;
+
+        });
+
+
+        //全选 禁用 启用 按钮的点击事件
+        $('#btn-able-status>a:not(".active")').on('click',function(){
+            getUrl('b',$(this).attr('data-cate'));
+        });
+
+        /*组装跳转url
+         *str 地址栏的参数名
+         *param 当前触发对象的参数值
+         */
+        function getUrl(str,param){
+            var s=getUrlParam('s');
+            var pr=getUrlParam('pr');
+            var c=getUrlParam('c');
+            var d=getUrlParam('d');
+            var sort=getUrlParam('sort');
+
+            var b=getUrlParam('b');
+            var href='__SITE__managerList';
+            switch (str){
+                case 'sort':
+                    sort=param;
+                    break;
+
+                case 'b':
+                     b=param;
+                    break;
+            }
+            if(pr){
+                href=href+'/pr/'+pr;
+            }
+            if(c){
+                href=href+'/c/'+c;
+            }
+            if(d){
+                href=href+'/d/'+d;
+            }
+            if(s){
+                href=href+'/s/'+s;
+            }
+            if(sort){
+                href=href+'/sort/'+sort;
+            }
+            if(b){
+                href=href+'/b/'+b;
+            }
+            window.location.href=href;
+        }
+
+
+
+
+
+
+        /*判断url中参数是否存在
+        * str 判断的参数名称
+        */
+        function getUrlParam(str){
+            switch (str){
+                case 'pr':
+                    var pr="<?php echo input('param.pr'); ?>";
+                        return pr;
+                    break;
+                case 'c':
+                    var c="<?php echo input('param.c'); ?>";
+                    return c;
+                    break;
+                case 'd':
+                    var d="<?php echo input('param.d'); ?>";
+                    return d;
+                    break;
+                case 's':
+                    var s="<?php echo input('param.s'); ?>";
+                    return s;
+                    break;
+                case 'b':
+                    var b="<?php echo input('param.b'); ?>";
+                    return b;
+                    break;
+                case 'sort':
+                    var sort="<?php echo input('param.sort'); ?>";
+                    return sort;
+                    break;
+
+            }
+        }
+
+
+
+
+        //查看地区弹出框
+        $(function () {
+            $("[data-toggle='tooltip']").tooltip();
+        });
+
+        //降序提示
+        $(function () {
+            $("[data-toggle='tooltip']").tooltip();
+        });
+
+
+        //列表中启用、禁用按钮的点击事件
+        var $alert = $('#alert-modal');
+        $('tbody').on('click','.able-status', function () {
+            var data_id = $(this).attr('data-id');
+            var data_status = $(this).attr('data-status');
+            if (data_status == '1') {
+                $alert.find('h2').html('确认开通此管理员？');
+            } else {
+                $alert.find('h2').html('确认禁用此管理员？');
+            }
+
+            var $confirm = $alert.find('.confirm');
+            $confirm.attr('data-type', 'able-status');
+            $confirm.attr('data-id', data_id);
+            $confirm.attr('data-status', data_status);
+            $alert.modal();
+        });
+
+        //弹出框确认操作
+        $alert.on('click', '.confirm', function () {
+            var type = $(this).attr('data-type');
+            var status = $(this).attr('data-status');
+            var id = $(this).attr('data-id');
+            switch (type) {
+                case 'able-status'://确认开通
+                    $.post('__INDEX__manager/updateStatus', {id: id, status: status}, function (msg) {
+
+                        var $td = $('.able-status[data-id="' + id + '"]').parent();
+                        $td.empty();
+                        switch (status) {
+                            case '1':
+                                var $a = $('<a href="javascript:void (0);" class="btn btn-danger btn-xs able-status"  data-id="' + id + '" data-type="able-status" data-status="2">禁用</a>&nbsp;<a href="__INDEX__manager/editManager/id/' + id + '" class="btn btn-info btn-xs">编辑</a>');
+
+                                $td.prev().html('开通');
+                                $td.prev().prev().prev().html(msg);
+                                $td.prev().prev().empty();
+                                break;
+                            case '2':
+                                var $a = $('<a href="javascript:void (0);" class="btn btn-success btn-xs able-status" data-id="' + id + '" data-type="able-status" data-status="1">开通</a>&nbsp;<a href="__INDEX__manager/editManager/id/' + id + '" class="btn btn-info btn-xs">编辑</a>');
+                                $td.prev().html('禁用');
+
+                                $td.prev().prev().html(msg);
+                                $td.prev().prev().prev().empty();
+                                break;
+                        }
+                        $td.append($a);
+                        $alert.modal('hide');
+                    });
+                    break;
+                case 'disable-status'://禁止开通
+                    break;
+            }
+        });
+
+    });
+
+
+</script>

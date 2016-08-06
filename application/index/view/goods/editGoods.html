@@ -1,0 +1,437 @@
+
+{eq name="info.status" value="1"}
+<div class="zk-btn-float hvr-buzz">
+    <i class="fa fa-pencil-square-o"></i>
+    <p>保存草稿</p>
+</div>
+{/eq}
+<div class="panel-body" >
+
+
+    <form class="form-horizontal" role="form">
+        <div class="form-group form-group-sm" id="goods_name">
+            <label class="col-md-2 control-label">商品名</label>
+            <div class="col-md-9">
+                <input type="text" class="form-control" name="goods_name" placeholder="商品名" value="{$info.goods_name}">
+                <input type="hidden" name="goods_id"  value="{$info.goods_id}">
+            </div>
+        </div>
+        <link rel="stylesheet" href="__S__webUpload/webuploader.css">
+        <script src="__S__webUpload/webuploader.min.js"></script>
+        <div class="form-group form-group-sm" id="head_img">
+            <label class="col-md-2 control-label">主图</label>
+            <div class="col-md-10">
+                <div id="head-img-list">
+                    {foreach $info['headImg'] as $key=>$v}
+                    <div class="head-img col-md-2" data-name="{$v.save_name}">
+                        <div class="img"><img src="/static/upload/image/goods/head_img/{$v.save_name}" alt=""></div>
+                        <div class="img-name"><span>主图{$key+1} </span><span class="fa fa-trash pull-right"></span></div>
+                    </div>
+                    {/foreach}
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div id="picker" class="pull-left">选择主图</div>
+                    </div>
+                </div>
+
+
+            </div>
+
+        </div>
+
+        <script src="http://apps.bdimg.com/libs/jqueryui/1.9.2/jquery-ui.min.js"></script>
+        <script>
+
+
+            var $list = $('#head-img-list'),
+            // 优化retina, 在retina下这个值是2
+            // 缩略图大小
+                    thumbnailWidth = 180,
+                    thumbnailHeight = 180,
+                    uploader = WebUploader.create({
+
+                        // 选完文件后，是否自动上传。
+                        auto: true,
+
+                        // swf文件路径
+                        swf: '__S__webUpload/Uploader.swf',
+
+                        // 文件接收服务端。
+                        server: '__INDEX__image/goodsHeadImg',
+
+                        // 选择文件的按钮。可选。
+                        // 内部根据当前运行是创建，可能是input元素，也可能是flash.
+                        pick: '#picker',
+
+                        // 只允许选择图片文件。
+                        accept: {
+                            title: 'Images',
+                            extensions: 'gif,jpg,jpeg,bmp,png',
+                            mimeTypes: 'image/*'
+                        }
+                    });
+            //绑定鼠标滑过主图
+            $list.on('mouseenter mouseleave','.head-img',function(event){
+                var $img_name=$(this).find('.img-name');
+                switch (event.type){
+                    case 'mouseenter':
+                            $img_name.slideDown('fast');
+                        break;
+                    case 'mouseleave':
+                            $img_name.slideUp('fast');
+                        break;
+                }
+            });
+
+
+            //移动主图
+            $list.sortable({
+                cursor: "move",
+                items: ".head-img", //只是li可以拖动
+                opacity: 0.6, //拖动时，透明度为0.6
+                revert: true, //释放时，增加动画
+                update: function (event, ui) { //更新排序之后
+                }
+            });
+
+            //删除上传图片
+            $list.on('click','.fa-trash',function(){
+
+                var parent=$(this).parent().parent();
+                $.post('__INDEX__image/remove',{name:parent.attr('data-name'),cate:'head_img'},function(msg){
+                    if(msg.status==1){
+                        parent.remove();
+                    }
+                })
+            });
+
+
+            // 当有文件添加进来的时候
+            uploader.on('fileQueued', function (file) {
+                var  length=$('.head-img').length+1;
+                var $li = $('<div class="head-img col-md-2" id="'+file.id+'">'+
+                        '<div class="img"><img></div>'+
+                        '<div class="img-name"><span>主图'+length+'</span><span class="fa fa-trash pull-right"></span></div>'+
+                        '</div>'),
+                        $img = $li.find('img');
+
+                // $list为容器jQuery实例
+                $list.append($li);
+
+                // 创建缩略图
+                // 如果为非图片文件，可以不用调用此方法。
+                // thumbnailWidth x thumbnailHeight 为 100 x 100
+                uploader.makeThumb(file, function (error, src) {
+                    if (error) {
+                        $img.replaceWith('<span>不能预览</span>');
+                        return;
+                    }
+
+                    $img.attr('src', src);
+                }, thumbnailWidth, thumbnailHeight);
+            });
+
+            // 文件上传过程中创建进度条实时显示。
+            uploader.on('uploadProgress', function (file, percentage) {
+                var $li = $('#' + file.id),
+                    $percent = $('<div class="progress progress-striped active" style="height: 5px">'+
+                            '<div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 0%;">'+
+                            '</div>'+
+                            '</div>')
+                            .appendTo($li)
+                            .find('.progress-bar');
+                $percent.css('width', percentage * 100 + '%');
+            });
+
+            // 文件上传成功，给item添加成功class, 用样式标记上传成功。
+            uploader.on('uploadSuccess', function (file,msg) {
+                var $this=$('#' + file.id);
+                $this.attr('data-name',msg._raw);
+                $this.find('img').attr('src','/static/upload/image/goods/head_img/'+msg._raw);
+            });
+
+            // 文件上传失败，显示上传出错。
+            uploader.on('uploadError', function (file) {
+                var $li = $('#' + file.id),
+                        $error = $li.find('div.error');
+
+                // 避免重复创建
+                if (!$error.length) {
+                    $error = $('<div class="error"></div>').appendTo($li);
+                }
+
+                $error.text('上传失败');
+            });
+
+            // 完成上传完了，成功或者失败，先删除进度条。
+            uploader.on('uploadComplete', function (file) {
+                $('#' + file.id).find('.progress').remove();
+            });
+        </script>
+        <div class="form-group form-group-sm" id="feature">
+            <label class="col-md-2 control-label">特色</label>
+            <div class="col-md-9">
+                <textarea name="feature" class="form-control" cols="30" rows="3" placeholder="商品特色">{$info.feature}</textarea>
+
+            </div>
+        </div>
+        <div class="form-group form-group-sm" id="standard">
+            <label class="col-md-2 control-label">规格</label>
+            <div class="col-md-9">
+                <input type="text" class="form-control" name="standard" placeholder="规格" value="{$info.standard}">
+            </div>
+        </div>
+        <div class="form-group form-group-sm" id="province_code">
+            <label class="control-label col-md-2">所在地</label>
+            <div class="col-md-3">
+                <select name="province_code" data-id="1" class="form-control ">
+                    <!--<option value="1">省</option>-->
+                    {foreach $province as $v}
+                    <option value="{$v.code}" {$info.province_code==$v.code?'selected':''}>{$v.name}</option>
+                    {/foreach}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="city_code" data-id="2" class="form-control ">
+
+                    {foreach $city as $v}
+                    <option value="{$v.code}" {$info.city_code==$v.code?'selected':''}>{$v.name}</option>
+                    {/foreach}
+
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="district_code" data-id="3" class="form-control ">
+
+                    {foreach $district as $v}
+                    <option value="{$v.code}" {$info.district_code==$v.code?'selected':''}>{$v.name}</option>
+                    {/foreach}
+                </select>
+            </div>
+        </div>
+
+        <!--三级联动js-->
+        <script>
+            $('select').on('change', function () {
+                var $this = $(this);
+                var code = $this.val();
+                var cate = $this.attr('data-id');
+                var num = parseInt(cate) + 1;
+                var $next_select = $('select[data-id="' + num + '"]');
+                $next_select.empty();
+                $.post('__INDEX__manager/getCodeSun', {code: code, cate: cate}, function (msg) {
+                    switch (cate) {
+                        case '1':
+                            $next_select.append('<option value="1">请选择市</option>');
+                            break;
+                        case '2':
+                            $next_select.append('<option value="1">请选择区/县</option>');
+                            break;
+                    }
+
+                    for (var key in msg) {
+                        var option = $('<option value="' + msg[key].code + '">' + msg[key].name + '</option>');
+                        $next_select.append(option);
+                    }
+                });
+            });
+        </script>
+
+        <link rel="stylesheet" href="__S__editor/dist/css/wangEditor.min.css">
+        <script src="__S__editor/dist/js/wangEditor.min.js"></script>
+        <div class="form-group form-group-sm" id="intro">
+            <label class="col-md-2 control-label">详情</label>
+            <div class="col-md-9">
+                <textarea name="intro" id="editor" cols="30" rows="35"></textarea>
+            </div>
+        </div>
+        <script>
+            //初始化编辑器
+            var editor = new wangEditor('editor');
+            editor.config.uploadImgUrl = '__INDEX__image/editorImg';
+            editor.config.emotions = {
+                'default': {
+                    title: '默认',  // 组名称
+                    data: '/static/editor/emotions.data'  // data 可以是一个url地址，访问该地址要能返回表情包的json文件
+                }
+            };
+            editor.config.uploadImgFns.onload = function (msg, xhr) {
+                //解析text格式为json
+                var res=JSON.parse(msg);
+
+                // msg 服务器端返回的text
+                // xhr 是 xmlHttpRequest 对象，IE8、9中不支持
+                // 上传图片时，已经将图片的名字存在 editor.uploadImgOriginalName
+                var originalName = editor.uploadImgOriginalName || '';
+
+                // 插入图片：
+                editor.command(null, 'insertHtml', '<img src="' + res.src + '" alt="' + originalName + '" width="'+res.width+'" height="'+res.height+'" data-name="'+res.save_name+'" class="img-responsive"/>');
+            };
+            editor.create();
+            editor.$txt.html('<?php echo $info["intro"];?>');
+        </script>
+        <div class="form-group form-group-sm" id="price">
+            <label class="col-md-2 control-label">价格</label>
+            <div class="col-md-9">
+                <input type="text" class="form-control" name="price" placeholder="价格" value="{$info.price}">
+            </div>
+        </div>
+        <div class="form-group form-group-sm" id="freight">
+            <label class="col-md-2 control-label">运费</label>
+            <div class="col-md-9">
+                <input type="text" class="form-control" name="freight" placeholder="运费" value="{$info.freight}">
+            </div>
+        </div>
+        <div class="form-group form-group-sm" id="virtual_sales">
+            <label class="col-md-2 control-label">虚拟销量</label>
+            <div class="col-md-9">
+                <input type="text" class="form-control" name="virtual_sales" placeholder="虚拟销量" value="{$info.virtual_sales}">
+            </div>
+        </div>
+        <div class="form-group form-group-sm" id="outer_num">
+            <label class="col-md-2 control-label">外部编号</label>
+            <div class="col-md-9">
+                <input type="text" class="form-control" name="outer_num" placeholder="外部编号"  value="{$info.outer_num}">
+            </div>
+        </div>
+        <div class="form-group form-group-sm" id="common">
+
+            <div class="col-md-9 col-md-offset-2">
+                <a href="javascript:void (0);" class="btn btn-success btn-block" id="goods-submit">保存</a>
+            </div>
+
+        </div>
+    </form>
+
+
+</div>
+
+<script>
+    //保存草稿
+    $('.zk-btn-float').on('click', function () {
+
+        var fd = new FormData($('form')[0]);
+
+        //整理主图
+        var head_img=[];
+        $list.find('.head-img').each(function(){
+            var save_name=$(this).attr('data-name');
+            head_img.push(save_name);
+        });
+        fd.append('img',JSON.stringify(head_img));
+
+        //整理编辑器中的图片
+        var intro_img=[];
+        $('.wangEditor-txt').find('img').each(function(){
+            intro_img.push($(this).attr('data-name'));
+        });
+        fd.append('intro_img',JSON.stringify(intro_img));
+        $.ajax({
+            type: 'post',
+            url: '__INDEX__goods/saveDraft',
+            data: fd,
+            dataType: 'json',
+            success: function (msg) {
+
+                if (msg.status == 1) {
+                    var input=$('<input type="hidden" name="goods_id" value="'+msg.id+'">');
+                    //新建草稿
+                    $('form').prepend(input);
+                    var alert = $('<div class="alert-div"><div class="alert alert-success">新建草稿成功</div></div>');
+                    $('body').prepend(alert);
+                    alert.fadeIn("slow");
+                    setTimeout(function () {
+                                alert.fadeOut("slow");
+                                setTimeout(function () {
+                                            alert.remove();
+                                            submit_flag=true;
+                                        },
+                                        5000);
+                            },
+                            2000);
+                }else {
+                    var alert = $('<div class="alert-div"><div class="alert alert-success">保存草稿成功</div></div>');
+                    $('body').prepend(alert);
+                    alert.fadeIn("slow");
+                    setTimeout(function () {
+                                alert.fadeOut("slow");
+                                setTimeout(function () {
+                                            alert.remove();
+                                            submit_flag=true;
+                                        },
+                                        5000);
+                            },
+                            2000);
+
+                }
+            },
+            processData: false,
+            contentType: false,
+        });
+    });
+
+
+    //提交表单
+    $('#goods-submit').on('click', function () {
+
+        var fd = new FormData($('form')[0]);
+        //整理主图
+        var head_img=[];
+        $list.find('.head-img').each(function(){
+            var save_name=$(this).attr('data-name');
+            head_img.push(save_name);
+        });
+        fd.append('img',JSON.stringify(head_img));
+
+        //整理编辑器中的图片
+        var intro_img=[];
+        $('.wangEditor-txt').find('img').each(function(){
+            intro_img.push($(this).attr('data-name'));
+        });
+        fd.append('intro_img',JSON.stringify(intro_img));
+        $.ajax({
+            type: 'post',
+            url: '__INDEX__goods/saveGoods',
+            data: fd,
+            dataType: 'json',
+            success: function (msg) {
+
+                if (msg.status == 1) {
+                    //成功->提示->跳转
+                    var alert = $('<div class="form-group form-group-sm"  style="display: none;"><div class="col-md-9 col-md-offset-2"><div class="alert alert-success" style="margin-bottom: 0"><strong><i class="fa fa-warning (alias)">&nbsp;</i>成功！</strong>即将跳转</div></div></div>');
+
+                    $('#goods-submit').parent().parent().before(alert);
+                    alert.slideDown('fast');
+                    setTimeout(function () {
+                        window.location.href = '__SITE__goodsList';
+                    }, 200);
+                } else {
+                    //失败->提示
+                    var alert = $('<div class="form-group form-group-sm"  style="display: none;"><div class="col-md-9 col-md-offset-2"><div class="alert alert-danger" style="margin-bottom: 0"><strong><i class="fa fa-warning (alias)">&nbsp;</i>警告！</strong>' + msg.content.msg + '</div></div></div>');
+
+                    var ids=["goods_name","feature","standard","province_code",'head_img'];
+                    if($.inArray(msg.content.key,ids)!=-1){
+                        window.location.href = '#';
+                    }else {
+
+                        window.location.href = '#' + msg.content.key;
+                    }
+                    $('#' + msg.content.key).after(alert);
+//                    $('#goods-submit').parent().parent().before(alert);
+
+                    alert.slideDown('fast');
+                    setTimeout(function () {
+                        alert.slideUp('fast');
+                        setTimeout(function () {
+                            alert.remove();
+                        }, 5000);
+                    }, 3000);
+                }
+            },
+            processData: false,
+            contentType: false,
+        });
+    });
+
+</script>
